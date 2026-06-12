@@ -1,25 +1,17 @@
-name: Deploy to GitHub Pages
+name: Deploy React to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  contents: write
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,22 +19,34 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
-      - name: Install Dependencies ⭐
+      - name: Install dependencies
         run: npm ci
 
       - name: Build
         run: npm run build
-        env:
-          CI: false
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Detect build output folder (dist or build)
+        run: |
+          if [ -d "dist" ]; then
+            echo "PUBLISH_DIR=dist" >> $GITHUB_ENV
+          elif [ -d "build" ]; then
+            echo "PUBLISH_DIR=build" >> $GITHUB_ENV
+          else
+            echo "ERROR: Neither dist/ nor build/ folder found."
+            echo "Repo files:"
+            ls -la
+            exit 1
+          fi
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: ./build
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.PUBLISH_DIR }}
+          user_name: github-actions[bot]
+          user_email: github-actions[bot]@users.noreply.github.com
+          # optional: clean old files
+          force_orphan: true
