@@ -8,16 +8,19 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           cache: "npm"
@@ -48,5 +51,4 @@ jobs:
           publish_dir: ${{ env.PUBLISH_DIR }}
           user_name: github-actions[bot]
           user_email: github-actions[bot]@users.noreply.github.com
-          # optional: clean old files
           force_orphan: true
